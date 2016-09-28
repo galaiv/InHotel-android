@@ -1,0 +1,1329 @@
+package com.android.inhotel.tab;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.jivesoftware.smack.ConnectionListener;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnPreparedListener;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.text.TextUtils;
+import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.MediaController;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.VideoView;
+
+import com.android.inhotel.DrinkViewActivity;
+import com.android.inhotel.R;
+import com.android.inhotel.RegistrationActivity;
+import com.android.inhotel.common.ListviewImageLoader;
+import com.android.inhotel.http.MultipartEntityBuilder;
+import com.android.inhotel.logger.Log;
+import com.android.inhotel.quickblox.BaseActivity;
+import com.android.inhotel.quickblox.Chat;
+import com.android.inhotel.quickblox.ChatService;
+import com.android.inhotel.quickblox.PrivateChatImpl;
+import com.android.inhotel.server.ServerConnector;
+import com.android.inhotel.utils.CommonActions;
+import com.quickblox.chat.QBChatService;
+import com.quickblox.chat.QBPrivateChatManager;
+import com.quickblox.chat.QBRoster;
+import com.quickblox.chat.listeners.QBRosterListener;
+import com.quickblox.chat.listeners.QBSubscriptionListener;
+import com.quickblox.chat.model.QBAttachment;
+import com.quickblox.chat.model.QBChatMessage;
+import com.quickblox.chat.model.QBDialog;
+import com.quickblox.chat.model.QBPresence;
+import com.quickblox.content.QBContent;
+import com.quickblox.content.model.QBFile;
+import com.quickblox.core.QBEntityCallbackImpl;
+import com.quickblox.core.request.QBRequestGetBuilder;
+import com.quickblox.users.model.QBUser;
+
+public class ConversationActivity extends BaseActivity implements OnCompletionListener  {
+	ArrayList<String> arr_chatArrayList;
+	TextView tv_back, tv_title;
+	int status, page = 0;
+	SharedPreferences prefs;
+	String profID, chatID,nav,drinkID,type;
+	Editor edt;
+	ListView messagesContainer;
+	boolean video_flag=false,vdeo_popup_flag=false;
+
+	ProgressDialog progress_dialogue;
+	ArrayList<ArrayList<String>> arr_conv = new ArrayList<ArrayList<String>>();
+	ArrayList<String> arr_det = new ArrayList<String>();
+	RelativeLayout rl_1, rl_full,rl_totalView;
+	Bitmap thumbnail;	
+	ImageView iv_drink, iv_send, iv_video;
+	ChatAdapter adapter;
+	private static final String TAG = ConversationActivity.class
+			.getSimpleName();
+	private static final String TAGMSG = "MSG";
+	private Chat chat;
+	public static final String EXTRA_DIALOG = "dialog";
+	private final String PROPERTY_SAVE_TO_HISTORY = "save_to_history";
+	QBChatService chatService;;
+	private QBDialog dataSource;
+	EditText et_msg;
+	private static final int READ_REQUEST_CODE = 42;
+	private File mFileTemp;
+	FrameLayout fl_video;
+	VideoView vv_video;
+	FrameLayout rl_totalframe;
+	MultipartEntityBuilder mpEntity = MultipartEntityBuilder.create();
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_conversation);
+
+		Bundle b = getIntent().getExtras();
+
+		tv_back = (TextView) findViewById(R.id.tv_back);
+		tv_title = (TextView) findViewById(R.id.tv_title);
+		rl_1 = (RelativeLayout) findViewById(R.id.rl_1);
+		rl_full = (RelativeLayout) findViewById(R.id.rl_full);
+		rl_totalView= (RelativeLayout) findViewById(R.id.rl_totalView);
+		vv_video = (VideoView) findViewById(R.id.vv_video);
+		iv_drink = (ImageView) findViewById(R.id.iv_drink);
+		iv_send = (ImageView) findViewById(R.id.iv_send);
+		iv_video = (ImageView) findViewById(R.id.iv_video);
+		rl_totalframe = (FrameLayout) findViewById(R.id.rl_totalframe);
+		arr_chatArrayList = new ArrayList<String>();
+		et_msg = (EditText) findViewById(R.id.et_msg);
+		fl_video = (FrameLayout) findViewById(R.id.fl_video);
+		prefs = getSharedPreferences("Login Credinals", MODE_PRIVATE);
+		edt = prefs.edit();
+		messagesContainer = (ListView) findViewById(R.id.messagesContainer);
+		adapter = new ChatAdapter(ConversationActivity.this,
+				new ArrayList<QBChatMessage>(), arr_det);
+		tv_back.setCompoundDrawablesWithIntrinsicBounds(R.drawable.back_button,
+				0, 0, 0);
+		tv_back.setText("Back");
+		tv_title.setText("Conversation");
+		// adp_conv = new ConversationAdapter(ConversationActivity.this,
+		// arr_conv);
+
+		iv_video.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				Intent i = new Intent(Intent.ACTION_PICK,
+						android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+				startActivityForResult(i, 1);
+
+			}
+		});
+
+		iv_drink.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				
+				Bundle b = new Bundle();
+				Intent intent = new Intent(ConversationActivity.this,
+						DrinkViewActivity.class);
+				b.putString("profID", profID);
+				b.putString("QUicktID",  chatID);
+				intent.putExtras(b);
+				startActivity(intent);
+				finish();
+
+			}
+		});
+		iv_send.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				sendMEssage();
+			}
+		});
+		tv_back.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				onBackPressed();
+
+			}
+		});
+
+		ChatService.initIfNeed(this);
+		if (b != null) {
+			profID = b.getString("profID");
+			chatID = b.getString("QUicktID");
+			nav    = b.getString("page");
+			
+			Log.e("COnversat", profID + " profID:" + chatID+"nav"+nav);
+			
+			if(nav.equalsIgnoreCase("drink")){
+				drinkID = b.getString("drinkID");
+				
+				
+			} 
+				if (new CommonActions(ConversationActivity.this)
+						.isNetworkConnected()) {
+					progress_dialogue = ProgressDialog
+							.show(ConversationActivity.this, "Please wait",
+									"Loading");
+					progress_dialogue.setCanceledOnTouchOutside(false);
+					new ChatTask().execute(0);
+				} else {
+					new CommonActions(ConversationActivity.this)
+							.showToast("Please check your internet connection");
+				}
+			
+			
+
+			
+			
+		}
+
+		
+
+		ChatService.getInstance().addConnectionListener(chatConnectionListener);
+		
+		// Do this after success Chat login
+		QBRoster chatRoster = QBChatService.getInstance().getRoster(QBRoster.SubscriptionMode.mutual, subscriptionListener);
+		chatRoster.addRosterListener(rosterListener);
+	}
+
+	private void initChat() {
+		getDailogue();
+	}
+	public void getDailogue() {
+		QBPrivateChatManager privateChatManager = QBChatService.getInstance()
+				.getPrivateChatManager();
+		privateChatManager.createDialog(Integer.valueOf(chatID),
+				new QBEntityCallbackImpl<QBDialog>() {
+					@Override
+					public void onSuccess(QBDialog dialog, Bundle args) {
+						dataSource = dialog;
+						Integer opponentID = ChatService.getInstance()
+								.getOpponentIDForPrivateDialog(dialog);
+						chat = new PrivateChatImpl(ConversationActivity.this,
+								opponentID);
+
+						
+						loadChatHistory();
+					}
+
+					@Override
+					public void onError(List<String> errors) {
+						progress_dialogue.cancel();
+					}
+				});
+	}
+
+	private void loadChatHistory() {
+		QBRequestGetBuilder customObjectRequestBuilder = new QBRequestGetBuilder();
+		customObjectRequestBuilder.setPagesLimit(100);
+		customObjectRequestBuilder.sortDesc("date_sent");
+		QBDialog qbDialog = new QBDialog(dataSource.getDialogId().toString());
+
+		QBChatService.getDialogMessages(qbDialog, customObjectRequestBuilder,
+				new QBEntityCallbackImpl<ArrayList<QBChatMessage>>() {
+					@Override
+					public void onSuccess(ArrayList<QBChatMessage> messages,
+							Bundle args) {						
+						
+						progress_dialogue.dismiss();
+						adapter = new ChatAdapter(ConversationActivity.this,
+								new ArrayList<QBChatMessage>(), arr_det);
+						messagesContainer.setAdapter(adapter);
+
+						for (int i = messages.size() - 1; i >= 0; --i) {
+							QBChatMessage msg = messages.get(i);
+							showMessage(msg);
+						}
+
+					}
+
+					@Override
+					public void onError(List<String> errors) {
+						progress_dialogue.dismiss();						
+						adapter = null;
+						adapter.notifyDataSetChanged();
+
+					}
+				});
+
+		
+	}
+
+	ConnectionListener chatConnectionListener = new ConnectionListener() {
+		@Override
+		public void connected(XMPPConnection connection) {
+			Log.e(TAG, "connected");
+		}
+
+		@Override
+		public void authenticated(XMPPConnection connection) {
+			Log.e(TAG, "authenticated");
+		}
+
+		@Override
+		public void connectionClosed() {
+			Log.e(TAG, "connectionClosed");
+		}
+
+		@Override
+		public void connectionClosedOnError(final Exception e) {
+			Log.e(TAG, "connectionClosedOnError: " + e.getLocalizedMessage());
+
+		}
+
+		@Override
+		public void reconnectingIn(final int seconds) {
+			if (seconds % 5 == 0) {
+				Log.e(TAG, "reconnectingIn: " + seconds);
+			}
+		}
+
+		@Override
+		public void reconnectionSuccessful() {
+			Log.e(TAG, "reconnectionSuccessful");
+
+		}
+
+		@Override
+		public void reconnectionFailed(final Exception error) {
+			Log.e(TAG, "reconnectionFailed: " + error.getLocalizedMessage());
+		}
+	};
+
+	@Override
+	public void onStartSessionRecreation() {
+
+	}
+
+	@Override
+	public void onFinishSessionRecreation(final boolean success) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if (success) {
+					initChat();
+				}
+			}
+		});
+	}
+
+	public void sendMEssage() {
+
+		// 3161436
+		// chat = new PrivateChatImpl(ConversationActivity.this, 3161436);
+
+		String messageText = et_msg.getText().toString();
+		if (TextUtils.isEmpty(messageText)) {
+			return;
+		}
+
+		// Send chat message
+		//
+		QBChatMessage chatMessage = new QBChatMessage();
+		chatMessage.setBody(messageText);
+		chatMessage.setProperty(PROPERTY_SAVE_TO_HISTORY, "1");
+		chatMessage.setDateSent(new Date().getTime() / 1000);
+
+		try {
+			chat.sendMessage(chatMessage);
+		} catch (XMPPException e) {
+			Log.e(TAG, "failed to send a message", e);
+		} catch (SmackException sme) {
+			Log.e(TAG, "failed to send a message", sme);
+		}
+		
+		et_msg.setText("");
+		
+
+		
+	  
+		showMessage(chatMessage);
+		progress_dialogue.cancel();
+
+	}
+
+	public void showMessage(QBChatMessage message) {
+		
+		
+			adapter.add(message);
+
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				adapter.notifyDataSetChanged();
+				scrollDown();
+			}
+		});
+	}
+
+	private void scrollDown() {
+		messagesContainer.setSelection(messagesContainer.getCount() - 1);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+
+		ChatService.getInstance().removeConnectionListener(
+				chatConnectionListener);
+	}
+
+	@Override
+	public void onBackPressed() {
+		Log.e("onBackPressed",video_flag+"");
+		
+		if(!vdeo_popup_flag){
+			if(video_flag){
+				video_flag=false;
+				vv_video.stopPlayback();
+				
+				rl_full.setVisibility(View.VISIBLE);
+				fl_video.setVisibility(View.GONE);
+				
+				adapter.notifyDataSetChanged();
+			}else{
+				try {
+					if(chat!=null){
+						chat.release();
+					}
+					
+				} catch (XMPPException e) {
+					Log.e(TAG, "failed to release chat", e);
+				}
+				super.onBackPressed();	
+			}
+			
+		}
+		
+		
+		}
+
+	/**
+	 * Task for downloading Menu management data
+	 * 
+	 * @author joyal
+	 * 
+	 */
+	public class ChatTask extends AsyncTask<Integer, Void, String> {
+
+		@Override
+		protected String doInBackground(Integer... params) {
+
+			status = params[0];
+			if (status == 0) {
+				return new ServerConnector(ConversationActivity.this)
+						.getResponseFromServer(
+								CommonActions.appURL,
+								"MessageDetails",
+								"{\"to_id\": \""
+										+ prefs.getString("user_id", "")
+										+ "\"," + "\"from_id\": \"" + profID
+										+ "\"," + "\"pageNo\":\"" + page
+										+ "\" }", "\"\"");
+			}else if(status == 1){
+				return new ServerConnector(ConversationActivity.this)
+				.doRegistration(type, mpEntity);
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+
+			try {
+				JSONObject jobj = new JSONObject(result);
+				JSONObject jarr_det = jobj.getJSONObject("user_details");
+
+				arr_det = new ArrayList<String>();
+
+				arr_det.add(jarr_det.getString("to_user"));// toID
+				arr_det.add(jarr_det.getString("to_name"));// toname
+				arr_det.add(jarr_det.getString("to_image"));// toimage
+				arr_det.add(jarr_det.getString("from_user"));// fromid
+				arr_det.add(jarr_det.getString("from_name"));// fromname
+				arr_det.add(jarr_det.getString("from_image"));// fromimage
+
+				
+
+				if(nav.equalsIgnoreCase("drink")){
+					drink_toQuickblox();
+				}else{
+					if (isSessionActive()) {
+						initChat();
+					}
+				}
+				
+				
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				gotServerError("Database error. Try again");
+			}
+
+		}
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+		// The ACTION_OPEN_DOCUMENT intent was sent with the request code
+		// READ_REQUEST_CODE. If the request code seen here doesn't match, it's
+		// the
+		// response to some other intent, and the code below shouldn't run at
+		// all.
+
+		if (resultCode == RESULT_OK) {
+			if (requestCode == 1) {
+				//String selectedVideoPath = getPath(data.getData());				
+               showVideoPreview(data.getData());
+				
+			}
+		}
+
+	}
+	
+	public void drink_toQuickblox(){
+		
+		// Send chat message
+		     
+				QBChatMessage chatMessage = new QBChatMessage();
+				chatMessage.setBody("DRINK_INHOTEL");
+				chatMessage.setProperty(PROPERTY_SAVE_TO_HISTORY, "1");
+				chatMessage.setDateSent(new Date().getTime() / 1000);
+
+				try {
+					chat.sendMessage(chatMessage);
+				} catch (XMPPException e) {
+					Log.e(TAG, "failed to send a message", e);
+				} catch (SmackException sme) {
+					Log.e(TAG, "failed to send a message", sme);
+				}
+				
+				et_msg.setText("");
+				
+
+				type="drink";
+				
+              if(!chatMessage.getId().equalsIgnoreCase("")){
+            	  
+            	mpEntity.addTextBody("from_id",obj_common.getTextFrom(et_name));
+  				mpEntity.addTextBody("to_id",obj_common.getTextFrom(et_email));
+  				mpEntity.addTextBody("message",obj_common.getTextFrom(et_phone));
+  				mpEntity.addTextBody("drinks_id",obj_common.getTextFrom(et_Confirmpassword));
+  				mpEntity.addTextBody("message_id", chatMessage.getId());
+  				mpEntity.addTextBody("quantity", 1);
+				}  
+				
+				
+				
+				
+				
+				 
+				
+			
+		
+		
+	}
+	
+	
+	public void showVideoPreview(final Uri path){
+		vdeo_popup_flag=true;
+		rl_full.setVisibility(View.GONE);
+		rl_totalframe.setVisibility(View.VISIBLE);
+		
+		View myView =  getLayoutInflater().inflate(R.layout.custom_video_popup, null);
+		
+		rl_totalframe.addView(myView);
+		
+		/*final Dialog dialog = new Dialog(ConversationActivity.this,android.R.style.Theme_DeviceDefault);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.getWindow().setBackgroundDrawable(
+                new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().clearFlags(LayoutParams.FLAG_DIM_BEHIND);
+        dialog.setContentView(ConversationActivity.this.getLayoutInflater().inflate(
+                R.layout.custom_video_popup, null));
+*/
+		final VideoView vv_video_popup = (VideoView) myView.findViewById(R.id.vv_video);
+		
+		TextView tv_cancel_v = (TextView) myView.findViewById(R.id.tv_back);
+		TextView tv_upload_v = (TextView) myView.findViewById(R.id.tv_save);
+		TextView tv_title_v = (TextView)  myView.findViewById(R.id.tv_title);
+		tv_cancel_v.setText("Cancel");
+		tv_title_v.setText("Video");
+		tv_upload_v.setText("Upload");
+		
+		vv_video_popup.setVideoURI(path);		
+		vv_video_popup.requestFocus();
+		vv_video_popup.setMediaController(new MediaController(ConversationActivity.this));
+		vv_video_popup.setZOrderOnTop(true);
+		vv_video_popup.setVisibility(View.VISIBLE);
+		
+	/*	vv_video.setOnCompletionListener(this);*/
+		
+		vv_video_popup.setOnPreparedListener(new OnPreparedListener() {
+			public void onPrepared(MediaPlayer mp) {
+				// TODO Auto-generated method stub		
+				
+				Log.e("VIEDEP PLAYER","START");
+				vv_video_popup.start();		
+
+			}
+		});
+		
+		
+		tv_upload_v.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				//dialog.cancel();
+				rl_full.setVisibility(View.VISIBLE);
+				rl_totalframe.setVisibility(View.GONE);
+				vv_video_popup.setVisibility(View.GONE);
+				vdeo_popup_flag=false;
+				
+				progress_dialogue = ProgressDialog.show(
+						ConversationActivity.this, "Please wait", "Uploading....");
+				progress_dialogue.setCanceledOnTouchOutside(false);
+				video_upload_quickblox(getPath(path));
+				
+			}
+		});
+		
+		tv_cancel_v.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				rl_full.setVisibility(View.VISIBLE);
+				rl_totalframe.setVisibility(View.GONE);
+				vv_video_popup.setVisibility(View.GONE);
+				vdeo_popup_flag=false;
+				
+				vv_video_popup.stopPlayback();
+				//dialog.cancel();
+			}
+		});
+		
+		
+ 		//dialog.show();
+	}
+	
+	public void video_upload_quickblox(final String path){
+		//File file = new File(data.getData().toString());
+
+		File VideoPhoto = new File(path);
+		Boolean fileIsPublic = false;
+	
+		
+		QBContent.uploadFileTask(VideoPhoto, fileIsPublic, null,
+				new QBEntityCallbackImpl<QBFile>() {
+					@Override
+					public void onSuccess(QBFile file, Bundle params) {
+						
+						
+						String state = Environment
+								.getExternalStorageState();
+						if (Environment.MEDIA_MOUNTED.equals(state)) {
+							mFileTemp = new File(Environment
+									.getExternalStorageDirectory(),
+									"InHotel");
+
+							if (!mFileTemp.exists()) {
+								mFileTemp.mkdir();
+							}
+							
+							File myFile = new File(mFileTemp + "/" + file.getId()+ ".mp4");
+							
+							try {
+								FileInputStream fis = new FileInputStream(path);
+
+								byte[] buffer = new byte[1024];
+								int bufferLength = 0;
+								int downloadedSize = 0;
+								FileOutputStream fileOutput;
+
+								fileOutput = new FileOutputStream(myFile);
+
+								// now, read through the input buffer and write the
+								// contents to the file
+								while ((bufferLength = fis.read(buffer)) > 0) {
+									// add the data in the buffer to the file in the
+									// file output stream (the file on the sd card
+									fileOutput.write(buffer, 0, bufferLength);
+									// add up the size so we know how much is
+									// downloaded
+									downloadedSize += bufferLength;
+									// this is where you would do something to
+									// report the prgress, like this maybe
+									// updateProgress(downloadedSize, totalSize);
+
+								}
+								fileOutput.close();
+
+							} catch (FileNotFoundException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (Exception ex) {
+								System.out.println("ex: " + ex);
+							}
+							
+
+							/*if (myFile.exists()) {
+								Log.e("Going Play6 from file", file.getId() + "");
+								playVideo(Uri.fromFile(myFile));
+							} else {
+								Log.e("Going Download", file.getId() + "");
+								// Download the video from quickblox
+								progress_dialogue = ProgressDialog.show(
+										ConversationActivity.this, "Please wait", "Downloading....");
+								progress_dialogue.setCanceledOnTouchOutside(false);
+								download_vdo_quickblox(fileId,true);
+							}*/
+
+						} else {
+							//alert("Please insert SD Card to download this file. ");								
+
+						}						
+						
+						
+						// create a message
+						QBChatMessage chatMessage = new QBChatMessage();
+						chatMessage.setProperty("save_to_history", "1"); 
+
+						// attach a photo
+						QBAttachment attachment = new QBAttachment("video");
+						attachment.setId(file.getId().toString());
+						chatMessage.addAttachment(attachment);
+
+						try {
+							chat.sendMessage(chatMessage);
+						} catch (XMPPException e) {
+							Log.e(TAG, "failed to send a message", e);
+						} catch (SmackException sme) {
+							Log.e(TAG, "failed to send a message", sme);
+						}
+						Log.e("chatMessage 222", chatMessage + "::::");
+						et_msg.setText("");
+						
+						
+						showMessage(chatMessage);
+						progress_dialogue.cancel();
+						// send a message
+						// ...
+					}
+
+					@Override
+					public void onError(List<String> errors) {
+						// error
+						Log.e("onError Upload", errors + "sdf");
+						progress_dialogue.cancel();
+						
+						new CommonActions(ConversationActivity.this)
+						.showToast("Something went wrong !! Please try again");
+						
+					}
+				});
+	}
+
+	/**
+	 * Returns the path of the given uri
+	 * 
+	 * @param uri
+	 * @return the path of the passed uri
+	 */
+	private String getPath(Uri uri) {
+		String[] projection = { MediaStore.Video.Media.DATA,
+				MediaStore.Video.Media.SIZE, MediaStore.Video.Media.DURATION };
+		Cursor cursor = managedQuery(uri, projection, null, null, null);
+		cursor.moveToFirst();
+		String filePath = cursor.getString(cursor
+				.getColumnIndexOrThrow(MediaStore.Video.Media.DATA));
+		int fileSize = cursor.getInt(cursor
+				.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE));
+		long duration = TimeUnit.MILLISECONDS.toSeconds(cursor.getInt(cursor
+				.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)));
+
+		// some extra potentially useful data to help with filtering if
+		/*
+		 * // necessary System.out.println("size: " + fileSize);
+		 * System.out.println("path: " + filePath);
+		 * System.out.println("duration: " + duration);
+		 */
+		return filePath;
+	}
+
+	/*
+	 * public void setListview() { if (messagesContainer.getAdapter() == null) {
+	 * messagesContainer.setAdapter(adapter); } else {
+	 * adapter.notifyDataSetChanged(); } }
+	 */
+
+	/*
+	 * Method to manage the exeption occured due to server down
+	 */
+	public void gotServerError(String msg) {
+		if (progress_dialogue.isShowing()) {
+			progress_dialogue.cancel();
+		}
+		new AlertDialog.Builder(ConversationActivity.this).setTitle("Message")
+				.setMessage(msg)
+				.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				})
+
+				.show();
+	}
+
+	public void playVideo(Uri uri) {
+		video_flag=true;
+
+		rl_full.setVisibility(View.GONE);
+		fl_video.setVisibility(View.VISIBLE);
+		
+		
+		DisplayMetrics dm = new DisplayMetrics();
+		this.getWindowManager().getDefaultDisplay().getMetrics(dm);
+		int height = dm.heightPixels; 
+		int width = dm.widthPixels;
+		vv_video.setMinimumWidth(width);
+		vv_video.setMinimumHeight(height);
+		vv_video.requestFocus();
+		vv_video.setVideoURI(uri);
+		vv_video.setMediaController(new MediaController(ConversationActivity.this));
+	/*	vv_video.setOnCompletionListener(this);*/
+		
+		vv_video.setOnPreparedListener(new OnPreparedListener() {
+			public void onPrepared(MediaPlayer mp) {
+				// TODO Auto-generated method stub
+				vv_video.start();
+				Log.e("GOT CLICK", "VIDEP");
+				// vv_video.start();
+
+			}
+		});
+		
+		
+
+	}
+	@Override
+    public void onCompletion(MediaPlayer mp) {
+        // The video has finished, return from this activity
+        finish();
+    }
+	
+	
+	// ***************************************ADAPTER*******************************************
+
+	public class ChatAdapter extends BaseAdapter {
+
+		private final List<QBChatMessage> chatMessages;
+		private Activity context;
+		ArrayList<String> arr_det;
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar c = Calendar.getInstance();
+
+		Integer fileId;
+
+		public ChatAdapter(Activity context, List<QBChatMessage> chatMessages,
+				ArrayList<String> arr_det) {
+			this.context = context;
+			this.chatMessages = chatMessages;
+			this.arr_det = arr_det;
+		}
+
+		@Override
+		public int getCount() {
+			if (chatMessages != null) {
+				return chatMessages.size();
+			} else {
+				return 0;
+			}
+		}
+
+		@Override
+		public QBChatMessage getItem(int position) {
+			if (chatMessages != null) {
+				return chatMessages.get(position);
+			} else {
+				return null;
+			}
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return position;
+		}
+
+		@Override
+		public View getView(final int position, View convertView,
+				ViewGroup parent) {
+			ViewHolder holder;
+			final QBChatMessage chatMessage = getItem(position);
+			LayoutInflater vi = (LayoutInflater) context
+					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+			if (convertView == null) {
+				convertView = vi.inflate(R.layout.list_item_message, null);
+				holder = createViewHolder(convertView);
+				convertView.setTag(holder);
+			} else {
+				holder = (ViewHolder) convertView.getTag();
+			}
+			chatMessage.getId();
+			QBUser currentUser = ChatService.getInstance().getCurrentUser();
+			boolean isOutgoing = chatMessage.getSenderId() == null
+					|| chatMessage.getSenderId().equals(currentUser.getId());
+			setAlignment(holder, isOutgoing);
+			holder.tv_cht_me_message.setText(Uri.decode(chatMessage.getBody()));
+			holder.tv_cht_me_time.setText(getTimeText(chatMessage));
+
+			if(null != chatMessage.getAttachments()){
+				if (chatMessage.getAttachments().size() > 0) {				
+					holder.tv_cht_me_message.setVisibility(View.GONE);
+					holder.rl_me_video.setVisibility(View.VISIBLE);
+
+					holder.rl_me_video.setOnClickListener(new OnClickListener() {
+
+						@Override
+						public void onClick(View v) {
+
+							Log.e("Video click", "Clicked");
+							for (QBAttachment attachment : chatMessage
+									.getAttachments()) {
+								fileId = Integer.valueOf(attachment.getId());
+								Log.e("Video click", "Clicked " + fileId);
+
+								String state = Environment
+										.getExternalStorageState();
+								if (Environment.MEDIA_MOUNTED.equals(state)) {
+									mFileTemp = new File(Environment
+											.getExternalStorageDirectory(),
+											"InHotel");
+
+									if (!mFileTemp.exists()) {
+
+										mFileTemp.mkdir();
+
+									}									
+
+									File myFile = new File(mFileTemp + "/" + fileId+ ".mp4");
+
+									if (myFile.exists()) {
+										
+										playVideo(Uri.fromFile(myFile));
+									} else {
+										
+										// Download the video from quickblox
+										progress_dialogue = ProgressDialog.show(
+												ConversationActivity.this, "Please wait", "Downloading....");
+										progress_dialogue.setCanceledOnTouchOutside(false);
+										download_vdo_quickblox(fileId,true);
+									}
+
+								} else {
+									alert("Please insert SD Card to download this file. ");								
+
+								}
+
+							}
+						}
+					});
+				} else {
+					holder.tv_cht_me_message.setVisibility(View.VISIBLE);
+					holder.rl_me_video.setVisibility(View.GONE);
+				}
+
+			}else {
+				holder.tv_cht_me_message.setVisibility(View.VISIBLE);
+				holder.rl_me_video.setVisibility(View.GONE);
+			}
+			
+			return convertView;
+		}
+
+		public void add(QBChatMessage message) {
+			chatMessages.add(message);
+		}
+
+		public void add(List<QBChatMessage> messages) {
+			chatMessages.addAll(messages);
+		}
+
+		private void setAlignment(ViewHolder holder, boolean isOutgoing) {
+			if (!isOutgoing) {
+				holder.contentWithBG
+						.setBackgroundResource(R.drawable.bubbl_you);
+
+				RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.contentWithBG
+						.getLayoutParams();
+				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+				layoutParams.setMargins((int) context.getResources()
+						.getDimension(R.dimen.y_bg_left), 0, (int) context
+						.getResources().getDimension(R.dimen.y_right), 0);
+				holder.contentWithBG.setLayoutParams(layoutParams);
+
+				/*
+				 * RelativeLayout.LayoutParams lp =
+				 * (RelativeLayout.LayoutParams)
+				 * holder.content.getLayoutParams();
+				 * lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+				 * lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+				 * holder.content.setLayoutParams(lp);
+				 */
+
+				RelativeLayout.LayoutParams lp_iv = (RelativeLayout.LayoutParams) holder.iv_profile
+						.getLayoutParams();
+				lp_iv.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+				lp_iv.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+				lp_iv.setMargins(0, 0, 15, 0);
+				holder.iv_profile.setLayoutParams(lp_iv);
+
+				RelativeLayout.LayoutParams lp_name = (RelativeLayout.LayoutParams) holder.tv_cht_me_name
+						.getLayoutParams();
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				lp_name.setMargins(
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10), 0, 0);
+				holder.tv_cht_me_name.setLayoutParams(lp_name);
+
+				lp_name = (RelativeLayout.LayoutParams) holder.tv_cht_me_message
+						.getLayoutParams();
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				lp_name.setMargins(
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_20), 0);
+				holder.tv_cht_me_message.setLayoutParams(lp_name);
+
+				lp_name = (RelativeLayout.LayoutParams) holder.tv_cht_me_time
+						.getLayoutParams();
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+				lp_name.setMargins(
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_20), 0);
+				holder.tv_cht_me_time.setLayoutParams(lp_name);
+
+				holder.tv_cht_me_name.setTextColor(R.color.chat_line1_you);
+				holder.tv_cht_me_time.setTextColor(R.color.chat_line1_you);
+				holder.tv_cht_me_name.setText(arr_det.get(4));
+				new ListviewImageLoader(context).loadImage(holder.iv_profile,
+						arr_det.get(5));
+
+				/*
+				 * layoutParams = (LinearLayout.LayoutParams)
+				 * holder.tv_cht_me_name.getLayoutParams(); layoutParams.gravity
+				 * = Gravity.RIGHT;
+				 * holder.tv_cht_me_name.setLayoutParams(layoutParams);
+				 * 
+				 * holder.tv_cht_me_name.setText("YOU");
+				 */
+
+				/*
+				 * layoutParams = (LinearLayout.LayoutParams)
+				 * holder.txtInfo.getLayoutParams(); layoutParams.gravity =
+				 * Gravity.RIGHT; holder.txtInfo.setLayoutParams(layoutParams);
+				 */
+			} else {
+				holder.contentWithBG.setBackgroundResource(R.drawable.bubbl_me);
+
+				RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.contentWithBG
+						.getLayoutParams();
+				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				layoutParams.setMargins((int) context.getResources()
+						.getDimension(R.dimen.y_right), 0, (int) context
+						.getResources().getDimension(R.dimen.y_bg_left), 0);
+				holder.contentWithBG.setLayoutParams(layoutParams);
+
+				/*
+				 * RelativeLayout.LayoutParams lp =
+				 * (RelativeLayout.LayoutParams)
+				 * holder.content.getLayoutParams();
+				 * lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				 * lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				 * holder.content.setLayoutParams(lp);
+				 */
+
+				RelativeLayout.LayoutParams lp_iv = (RelativeLayout.LayoutParams) holder.iv_profile
+						.getLayoutParams();
+				lp_iv.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				lp_iv.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				lp_iv.setMargins(15, 0, 0, 0);
+				holder.iv_profile.setLayoutParams(lp_iv);
+
+				RelativeLayout.LayoutParams lp_name = (RelativeLayout.LayoutParams) holder.tv_cht_me_name
+						.getLayoutParams();
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				lp_name.setMargins(22, (int) context.getResources()
+						.getDimension(R.dimen.margin_10), (int) context
+						.getResources().getDimension(R.dimen.margin_10), 0);
+				holder.tv_cht_me_name.setLayoutParams(lp_name);
+
+				lp_name = (RelativeLayout.LayoutParams) holder.tv_cht_me_message
+						.getLayoutParams();
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+				lp_name.setMargins(30, (int) context.getResources()
+						.getDimension(R.dimen.margin_10), (int) context
+						.getResources().getDimension(R.dimen.margin_10), 0);
+				holder.tv_cht_me_message.setLayoutParams(lp_name);
+
+				lp_name = (RelativeLayout.LayoutParams) holder.tv_cht_me_time
+						.getLayoutParams();
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+				lp_name.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+				lp_name.setMargins(
+						(int) context.getResources().getDimension(
+								R.dimen.margin_20),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10),
+						(int) context.getResources().getDimension(
+								R.dimen.margin_10), 0);
+				holder.tv_cht_me_time.setLayoutParams(lp_name);
+
+				holder.tv_cht_me_name.setTextColor(R.color.chat_line1_me);
+				holder.tv_cht_me_time.setTextColor(R.color.chat_line1_me);
+				holder.tv_cht_me_name.setText(arr_det.get(1));
+				new ListviewImageLoader(context).loadImage(holder.iv_profile,
+						arr_det.get(2));
+
+				/*
+				 * LinearLayout.LayoutParams layoutParams1 =
+				 * (LinearLayout.LayoutParams)
+				 * holder.tv_cht_me_name.getLayoutParams();
+				 * layoutParams1.gravity = Gravity.LEFT;
+				 * holder.tv_cht_me_name.setLayoutParams(layoutParams1);
+				 * holder.tv_cht_me_name.setText("YOU");
+				 */
+
+				/*
+				 * layoutParams = (LinearLayout.LayoutParams)
+				 * holder.txtInfo.getLayoutParams(); layoutParams.gravity =
+				 * Gravity.LEFT; //holder.txtInfo.setLayoutParams(layoutParams);
+				 */}
+		}
+
+		private ViewHolder createViewHolder(View v) {
+			ViewHolder holder = new ViewHolder();
+			holder.contentWithBG = (RelativeLayout) v
+					.findViewById(R.id.contentWithBG);
+			holder.rl_me_video = (RelativeLayout) v
+					.findViewById(R.id.rl_me_video);
+			holder.iv_profile = (ImageView) v.findViewById(R.id.iv_profile);
+			holder.tv_cht_me_name = (TextView) v
+					.findViewById(R.id.tv_cht_me_name);
+			holder.tv_cht_me_message = (TextView) v
+					.findViewById(R.id.tv_cht_me_message);
+			holder.tv_cht_me_time = (TextView) v
+					.findViewById(R.id.tv_cht_me_time);
+			/*
+			 * holder.content = (LinearLayout) v.findViewById(R.id.content);
+			 */
+			// holder.txtInfo = (TextView) v.findViewById(R.id.txtInfo);
+			return holder;
+		}
+
+		private String getTimeText(QBChatMessage message) {
+
+			String str[];
+			if (message.getProperties().get("updated_at") == null
+					|| message.getProperties().get("updated_at").equals("")) {
+
+				return df.format(c.getTime());
+			} else {
+				str = message.getProperties().get("updated_at").toString()
+						.split("T");
+				return str[0];
+
+			}
+
+		}
+
+		private class ViewHolder {
+
+			public LinearLayout content;
+			public RelativeLayout contentWithBG, rl_me_video;
+			public TextView tv_cht_me_name, tv_cht_me_message, tv_cht_me_time;
+			ImageView iv_profile;
+
+		}
+	}
+
+	public void download_vdo_quickblox(final Integer fileId,final boolean flg) {
+		// download a file
+		QBContent.downloadFileTask(fileId,
+				new QBEntityCallbackImpl<InputStream>() {
+					@Override
+					public void onSuccess(InputStream inputStream, Bundle params) {
+						
+						File file = null;
+						try {
+							file = new File(mFileTemp, fileId + ".mp4");
+							file.createNewFile();
+
+							byte[] buffer = new byte[1024];
+							int bufferLength = 0;
+							int downloadedSize = 0;
+							FileOutputStream fileOutput;
+
+							fileOutput = new FileOutputStream(file);
+
+							// now, read through the input buffer and write the
+							// contents to the file
+							while ((bufferLength = inputStream.read(buffer)) > 0) {
+								// add the data in the buffer to the file in the
+								// file output stream (the file on the sd card
+								fileOutput.write(buffer, 0, bufferLength);
+								// add up the size so we know how much is
+								// downloaded
+								downloadedSize += bufferLength;
+								// this is where you would do something to
+								// report the prgress, like this maybe
+								// updateProgress(downloadedSize, totalSize);
+
+							}
+							fileOutput.close();
+
+						} catch (FileNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (Exception ex) {
+							System.out.println("ex: " + ex);
+						}
+						
+						progress_dialogue.cancel();
+						
+						if(flg){
+							playVideo(Uri.fromFile(file));
+						}
+						
+
+					}
+
+					@Override
+					public void onError(List<String> errors) {
+						Log.e("downloadFile errors", "" + errors);
+						progress_dialogue.cancel();
+						alert("File is missing.");
+					}
+				});
+	}
+
+	/*
+	 * Method to manage the exeption occured due to server down
+	 */
+	public void alert(String msg) {
+		progress_dialogue.cancel();
+		new AlertDialog.Builder(ConversationActivity.this).setTitle("Message")
+				.setIcon(R.drawable.warning).setTitle("Warning !")
+				.setMessage(msg)
+				.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				})
+
+				.show();
+	}
+
+	
+	////***********************************PUSH***************************
+	
+	QBRosterListener rosterListener = new QBRosterListener() {
+	    @Override
+	    public void entriesDeleted(Collection<Integer> userIds) {
+	 
+	    }
+	 
+	    @Override
+	    public void entriesAdded(Collection<Integer> userIds) {
+	 
+	    }
+	 
+	    @Override
+	    public void entriesUpdated(Collection<Integer> userIds) {
+	 
+	    }
+	 
+	    @Override
+	    public void presenceChanged(QBPresence presence) {
+	 
+	    }
+	};
+	 
+	QBSubscriptionListener subscriptionListener = new QBSubscriptionListener() {
+	    @Override
+	    public void subscriptionRequested(int userId) {
+	 
+	    }
+	};
+}

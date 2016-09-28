@@ -1,0 +1,126 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/splash"
+    tools:context="${relativePackage}.${activityClass}" >
+
+    <RelativeLayout
+        android:id="@+id/rl_credentials"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp" >
+
+        <EditText
+            android:id="@+id/et_name"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_top"
+            android:hint="@string/hint_name"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <View
+            android:id="@+id/v1"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/et_name"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/seperator" />
+
+        <EditText
+            android:id="@+id/et_email"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v1"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_middle"
+            android:hint="@string/hint_user"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <View
+            android:id="@+id/v2"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/et_email"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/seperator" />
+
+        <EditText
+            android:id="@+id/et_phone"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v2"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_middle"
+            android:hint="@string/hint_phone"
+            android:inputType="phone"
+            android:paddingLeft="15dp"
+            android:singleLine="true"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/v3"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/et_phone"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/seperator"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/et_password"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v3"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_middle"
+            android:hint="@string/hint_pass"
+            android:inputType="textPassword"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <View
+            android:id="@+id/v4"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/et_password"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/seperator" />
+
+        <EditText
+            android:id="@+id/et_Confirmpassword"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v4"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_middle"
+            android:hint="@string/hint_Cpass"
+            android:inputType="textPassword"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <ImageView
+            android:id="@+id/bt_signup"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/et_Confirmpassword"
+            android:background="@drawable/registration_button"
+            android:scaleType="fitXY" />
+    </RelativeLayout>
+
+</RelativeLayout>

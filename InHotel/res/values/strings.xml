@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">InHotel</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="hint_user">Email</string>
+    <string name="hint_name">Name</string>
+    <string name="hint_phone">Phone</string>
+    <string name="hint_pass">Password</string>
+    <string name="hint_Cpass">Confirm Password</string>
+    <string name="hint_code">Access Code</string>
+    <string name="title_activity_registration">RegistrationActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_acess_code">AcessCodeActivity</string>
+    <string name="title_activity_tab">TabActivity</string>
+    <string name="title_Cpass">CHANGE PASSWORD</string>
+    <string name="title_Opass">Old Password</string>
+    <string name="title_Npass">New Password</string>
+    <string name="title_Conpass">Confirm Password</string>
+
+    <!-- Settings -->
+    <string name="tv1">MESSAGE SETTINGS</string>
+    <string name="tv2">Press Enter to Send Message</string>
+    <string name="tv3">CONNECTION SETTINGS</string>
+    <string name="tv4">Last Connection</string>
+    <string name="tv5">Connection Status</string>
+    <string name="tv11">Show Room Number</string>
+    <string name="tv6">ACCOUNT SETTINGS</string>
+    <string name="tv7">Account</string>
+    <string name="tv8">Access to Hotel</string>
+    <string name="tv8_1">Blocked Users</string>
+    <string name="tv9">Change Password</string>
+    <string name="tv10">Sign Out</string>
+    <string name="title_activity_home_fragment">HomeFragment</string>
+
+    <!-- My Hotel -->
+    <string name="htv1">My Hotel</string>
+    <string name="htv2">ADDRESS</string>
+    <string name="htv3">Phone</string>
+    <string name="htv4">Email</string>
+    <string name="htv5">Website</string>
+    <string name="htv6">SHARE YOUR EXPERIENCE WITH THE MANAGER</string>
+    <string name="htv7">Write Your Experience</string>
+
+    <!-- Account -->
+    <string name="Atv1">VACANCY</string>
+    <string name="Atv2">From</string>
+    <string name="Atv3">To</string>
+    <string name="Atv4">Room Number</string>
+    <string name="Atv5">Description</string>
+    <string name="Atv6">REASON OF YOUR VACANCY</string>
+    <string name="Atv7">INTERESTS</string>
+    <string name="title_activity_conversation">ConversationActivity</string>
+    <string name="tv_blockuser">Block User</string>
+    <string name="title_activity_publicview">PublicviewActivity</string>
+    <string name="title_activity_blocked_users">BlockedUsersActivity</string>
+    <string name="title_activity_drink_view">DrinkViewActivity</string>
+    <string name="title_activity_forgot_password">ForgotPAsswordActivity</string>
+
+</resources>

@@ -1,0 +1,43 @@
+<resources>
+
+    <!-- Base application theme. -->
+
+    <style name="AppTheme" parent="AppTheme.Base" />
+
+    <style name="AppTheme.Base" parent="Theme.AppCompat.Light.NoActionBar">
+
+        <!-- Customize your theme here. -->
+
+
+        <!-- colorPrimary is used for the default action bar background -->
+
+        <item name="colorPrimary">@color/colorPrimaryGreen</item>
+
+        <!-- colorPrimaryDark is used for the status bar -->
+
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        
+       <!--    <item name="colorPrimary">@color/colorPrimary_y</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark_y</item> -->
+        <item name="colorAccent">@color/colorAccent</item>
+        
+      
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <!-- <item name="drawerArrowStyle">@style/DrawerArrowStyle</item> -->
+
+
+        <!-- <item name="android:tabWidgetStyle">@style/CustomTabWidget</item> -->
+
+
+        <!-- Widget color -->
+
+
+        <!--
+        <item name="colorControlNormal">@color/widgetColor</item>
+        <item name="colorControlActivated">@color/widgetColor</item>
+        <item name="colorControlHighlight">@color/widgetColor</item>
+        -->
+    </style>
+
+</resources>

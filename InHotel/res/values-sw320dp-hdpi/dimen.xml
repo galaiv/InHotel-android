@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+     <!--CHAT  -->
+    <dimen name="y_bg_left">20dp</dimen>
+    <dimen name="y_bg_right">40dp</dimen>
+    <dimen name="m_bg_left">62dp</dimen>
+    <dimen name="margin_10">8dp</dimen>
+    <dimen name="margin_20">20dp</dimen>
+    <dimen name="m_name_left">22dp</dimen>
+    <dimen name="prof_margin">15dp</dimen>
+            <dimen name="y_right">40dp</dimen>
+
+</resources>

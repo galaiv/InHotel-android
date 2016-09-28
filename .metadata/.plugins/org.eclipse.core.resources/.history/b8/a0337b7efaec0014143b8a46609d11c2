@@ -1,0 +1,147 @@
+package com.newagesmb.inhotel;
+
+import java.util.ArrayList;
+
+import org.json.JSONException;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.widget.TextView;
+
+import com.newagesmb.inhotel.logger.Log;
+import com.newagesmb.inhotel.server.ServerConnector;
+import com.newagesmb.inhotel.tab.AccountFragment.AccountTask;
+import com.newagesmb.inhotel.utils.CommonActions;
+
+public class ConversationActivity extends Activity {
+	ArrayList<String> arr_chatArrayList;
+	TextView tv_back,tv_title;
+	int status,page;
+	SharedPreferences prefs;
+	Editor edt;
+	//tv_cht_me_name tv_cht_me_message  tv_cht_me_time  me
+	//you  tv_cht_you_time tv_cht_you_name tv_cht_ypu_message
+	//list
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_conversation);
+		
+		Bundle b           = getIntent().getExtras();
+		tv_back            = (TextView) findViewById(R.id.tv_back);
+		tv_title           = (TextView) findViewById(R.id.tv_title);
+		arr_chatArrayList  = new ArrayList<String>();
+		prefs              = getSharedPreferences("Login Credinals", MODE_PRIVATE);		
+		edt 			   = prefs.edit();
+		tv_back.setCompoundDrawablesWithIntrinsicBounds(R.drawable.back_button,0, 0, 0);
+		tv_back.setText("Back");	
+		tv_title.setText("Conversation");
+		
+        Log.e("chat",arr_chatArrayList.size()+"");		
+		if(b != null){
+			arr_chatArrayList=b.getStringArrayList("chat");			
+			Log.e("chat",arr_chatArrayList.get(2));
+			
+			if (new CommonActions(ConversationActivity.this).isNetworkConnected()) {				
+				new ChatTask().execute(0);
+			} else {
+				new CommonActions(ConversationActivity.this)
+						.showToast("Please check your internet connection");
+			}
+		}
+		
+		
+		
+	}
+	
+	@Override
+	public void onBackPressed() {
+		// TODO Auto-generated method stub
+		super.onBackPressed();
+		
+		startActivity(new Intent(
+				ConversationActivity.this,TabActivity.class));
+	}
+	
+	
+	
+	/**
+	 * Task for downloading Menu management data
+	 * 
+	 * @author joyal
+	 * 
+	 */
+	public class ChatTask extends AsyncTask<Integer, Void, String> {
+
+		@Override
+		protected String doInBackground(Integer... params) {
+			
+			status = params[0];
+			if (status == 0) {
+				return new ServerConnector(ConversationActivity.this)
+				.getResponseFromServer(
+						CommonActions.appURL,
+						"MessageDetails",
+						"{\"from_id\": \""+ prefs.getString("user_id", "")+ "\","
+								+ "\"to_id\": \" "+ arr_chatArrayList.get(0)+ "\","
+										+ "\"pageNo\":\""+page+"\" }", "\"\"");
+			}
+			/*
+			// TODO Auto-generated method stub
+			
+
+			if (status == 0) {
+				
+			} else if (status == 1) {
+				return new ServerConnector(getActivity())
+						.getResponseFromServer(CommonActions.appURL,
+								"vacancy_reason_list", "{}", "\"\"");
+			}else if (status == 2) {				
+				return new ServerConnector(getActivity()).doRegistration(type, mpEntity);
+			} else {
+				return null;
+			}
+
+		*/
+			
+			return null;
+			}
+
+		@Override
+		protected void onPostExecute(String result) {
+			
+				
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				gotServerError("Database error. Try again");
+			}
+			
+		}
+		}
+	
+	/*
+	 * Method to manage the exeption occured due to server down
+	 */
+	public void gotServerError(String msg) {
+		if (progress_dialogue.isShowing()) {
+			progress_dialogue.cancel();
+		}
+		new AlertDialog.Builder(getActivity()).setTitle("Message")
+				.setMessage(msg)
+				.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				})
+
+				.show();
+	}
+}

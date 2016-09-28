@@ -1,0 +1,207 @@
+package com.newagesmb.inhotel;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.EditText;
+import android.widget.ImageView;
+
+import com.newagesmb.inhotel.SplashScreenActivity.LoginTask;
+import com.newagesmb.inhotel.logger.Log;
+import com.newagesmb.inhotel.server.ServerConnector;
+import com.newagesmb.inhotel.utils.CommonActions;
+
+public class AcessCodeActivity extends Activity {
+
+	
+	EditText  et_code;
+	ImageView bt_continue,iv_close;
+	int       status;
+	String    code="";
+	ProgressDialog progress_dialogue;
+	SharedPreferences prefs;
+	Editor edt;
+	public static int chat;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_acess_code);
+		setAnimation(true);
+		
+		et_code	    = (EditText) findViewById(R.id.et_code);
+		iv_close    = (ImageView) findViewById(R.id.iv_close);
+		bt_continue = (ImageView) findViewById(R.id.bt_continue);
+		prefs       =  getSharedPreferences("Login Credinals", MODE_PRIVATE);		
+		edt 	    =  prefs.edit();
+		chat        =  0;
+		bt_continue.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				et_code.setText("1233867432");
+				//et_code.setText("1233867432");//  1380479981
+				if(!et_code.getText().toString().equalsIgnoreCase("")){
+					code=et_code.getText().toString();
+					if (new CommonActions(AcessCodeActivity.this).isNetworkConnected()) {
+
+						progress_dialogue = ProgressDialog.show(AcessCodeActivity.this, "Please wait","Loading");
+						new AcessCodeTask().execute(0);
+					} else {
+						new CommonActions(AcessCodeActivity.this).showToast("Please check your internet connection");
+					}
+				}else{
+					new AlertDialog.Builder(AcessCodeActivity.this).setTitle("Warning") 
+					.setMessage("Please enter the access code")
+					.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					})
+
+					.show();
+				}
+				
+			}
+		});
+		
+		iv_close.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {				
+				edt.putString("activation_status", "N");
+				edt.putString("activation_code", "");
+				edt.commit();
+				
+				startActivity(new Intent(
+						AcessCodeActivity.this,TabActivity.class));
+			}
+		});
+	}
+	
+	
+	@Override
+	public void onBackPressed() {
+		// TODO Auto-generated method stub
+		super.onBackPressed();
+		setAnimation(false);
+	}
+
+	
+	
+	//Intent Transition Animation
+	public void setAnimation(boolean flg) {
+
+		if (flg) {
+			// opening transition animations
+			overridePendingTransition(R.anim.activity_open_translate,
+					R.anim.activity_close_scale);
+
+		} else {
+			// closing transition animations
+			overridePendingTransition(R.anim.activity_open_scale,
+					R.anim.activity_close_translate);
+		}
+
+	}
+	
+	 /**
+		 * Task for downloading Menu management data
+		 * 
+		 * @author joyal
+		 * 
+		 */
+		public class AcessCodeTask extends AsyncTask<Integer, Void, String> {
+
+			@Override
+			protected String doInBackground(Integer... params) {
+				// TODO Auto-generated method stub
+				status = params[0];
+				if (status == 0) {
+					return new ServerConnector(AcessCodeActivity.this)
+							.getResponseFromServer(
+									CommonActions.appURL,
+									"checkActivationCodeExpires",
+									"{\"activation_code\": \""
+											+code+ "\",\"user_id\": \""
+										+ prefs.getString("user_id", "")
+										+ "\"}", "\"\"");
+
+			} else {
+				return null;
+			}
+
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			Log.e("result", result);
+			try {
+				if (status == 0) {
+					Log.e("result", result);
+
+					JSONObject jobj = new JSONObject(result);
+					progress_dialogue.cancel();
+					
+					if(jobj.getString("activation_status").equalsIgnoreCase("Y")){						
+						edt.putString("activation_status", jobj.getString("activation_status"));
+						edt.putString("activation_code", code);						
+						edt.commit();
+						new AlertDialog.Builder(AcessCodeActivity.this).setTitle("Message")
+						.setMessage(jobj.getString("message"))
+						.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.cancel();
+								startActivity(new Intent(AcessCodeActivity.this,TabActivity.class));
+								finish();
+							}
+						})
+
+						.show();	
+						
+					}else{
+						edt.putString("activation_status", jobj.getString("activation_status"));
+						edt.putString("activation_code", "");	
+						edt.commit();
+						gotServerError(jobj.getString("message"));
+					}
+				}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				gotServerError("Database error. Try again");
+			}
+			
+
+		}
+	}
+		
+		/*
+		 * Method to manage the exeption occured due to server down
+		 */
+		public void gotServerError(String msg) {
+			if(progress_dialogue.isShowing()){
+				progress_dialogue.cancel();
+			}
+			new AlertDialog.Builder(AcessCodeActivity.this).setTitle("Message")
+					.setMessage(msg)
+					.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					})
+
+					.show();
+		}
+}

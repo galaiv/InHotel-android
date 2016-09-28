@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_white"
+    android:orientation="vertical" >
+
+    <include
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/custom_header" />
+
+    <LinearLayout
+        android:id="@+id/rl_full"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <ListView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:animationCache="false"
+            android:background="@drawable/form_middle"
+            android:scrollingCache="false" />
+
+        <com.inhotelappltd.inhotel.PulltoRefresh.PullToRefreshView
+            android:id="@+id/pulltorefreshview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:animationCache="false"
+            android:background="@drawable/form_middle"
+            android:scrollingCache="false"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_nodata"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="80dp"
+            android:gravity="center"
+            android:text="No Data Available"
+            android:textSize="20sp" />
+    </LinearLayout>
+
+</LinearLayout>

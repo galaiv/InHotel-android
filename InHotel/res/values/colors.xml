@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="bg_white">#ffffff</color>
+    <color name="bg_chatview">#e9e9e9</color>
+    <color name="chat_line1_you">#B5C5C2</color>
+    <color name="chat_line1_me">#86A2B0</color>
+    <color name="chat_line1">#485f6a</color>
+    <color name="txt_blue">#4784b7</color>
+    <color name="img_border">#3a8376</color>
+    <color name="black">#000000</color>
+    <color name="lght_black">#323232</color>
+    <color name="bg_grey">#efeff4</color>
+    <color name="settings_txt">#474749</color>
+    <color name="tab_bg">#F8F8F8</color>
+    <color name="tab_grey">#989898</color>
+    <color name="tab_blue">#4784b7</color>
+    <color name="green_app">#579f92</color>
+    <color name="txt_green">#92D6CB</color>
+    <color name="colorPrimaryGreen">#2E4E01</color>
+    <color name="colorPrimary">#3787D9</color>
+    <color name="colorPrimaryDark">#3787D9</color>
+    <color name="colorDarkgrey">#969696</color>
+    <color name="colorAccent">#178B00</color>
+    <color name="colorGreen">#178B00</color>
+    <color name="transparent">#80000000</color>
+
+</resources>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="3dp"
+        android:background="@drawable/drink_bg" >
+
+        <ImageView
+            android:id="@+id/iv_you_image"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_centerVertical="true"
+            android:layout_margin="10dp"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/tv_you_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/iv_you_image"
+            android:layout_toRightOf="@id/iv_you_image"
+            android:singleLine="true"
+            android:textColor="@color/green_app"
+            android:textSize="18sp" />
+
+        <ImageView
+            android:id="@+id/iv_you_accept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_you_name"
+            android:layout_marginRight="15dp"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@id/iv_you_image"
+            android:scaleType="fitXY"
+            android:src="@drawable/btn_accept" />
+
+        <ImageView
+            android:id="@+id/iv_you_thanks"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_you_name"
+            android:layout_marginTop="10dp"
+            android:layout_toRightOf="@id/iv_you_accept"
+            android:scaleType="fitXY"
+            android:src="@drawable/btn_thanks" />
+    </RelativeLayout>
+
+</LinearLayout>

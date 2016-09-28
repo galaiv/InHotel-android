@@ -1,0 +1,130 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/splash"
+    android:descendantFocusability="beforeDescendants"
+    tools:context=".SplashScreenActivity" >
+
+    <RelativeLayout
+        android:id="@+id/rl_resetPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="80dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:visibility="gone" >
+
+        <EditText
+            android:id="@+id/et_frgt_email"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_top"
+            android:clickable="true"
+            android:focusableInTouchMode="true"
+            android:hint="@string/hint_user"
+            android:inputType="textEmailAddress"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <View
+            android:id="@+id/v12"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/et_frgt_email"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/seperator" />
+
+        <Button
+            android:id="@+id/bt_frgt_send"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v12"
+            android:background="@color/green_app"
+            android:scaleType="fitXY"
+            android:text="SEND"
+            android:textColor="@color/bg_white" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_credentials"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:visibility="gone" >
+
+        <EditText
+            android:id="@+id/et_username"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_top"
+            android:clickable="true"
+            android:focusableInTouchMode="true"
+            android:hint="@string/hint_user"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <View
+            android:id="@+id/v1"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/et_username"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/seperator" />
+
+        <EditText
+            android:id="@+id/et_password"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v1"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:background="@drawable/form_middle"
+            android:clickable="true"
+            android:focusableInTouchMode="true"
+            android:hint="@string/hint_pass"
+            android:inputType="textPassword"
+            android:paddingLeft="15dp"
+            android:singleLine="true" />
+
+        <ImageView
+            android:id="@+id/bt_login"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/et_password"
+            android:background="@drawable/login_button"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/tv_signup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/bt_login"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:textSize="20dp" />
+
+        <TextView
+            android:id="@+id/tv_forgot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_signup"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Forgot Password"
+            android:textStyle="bold"
+            android:textColor="@color/bg_white"
+            android:textSize="16dp" />
+    </RelativeLayout>
+
+</RelativeLayout>

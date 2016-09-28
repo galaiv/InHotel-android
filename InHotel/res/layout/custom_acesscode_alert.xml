@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/transparent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/rl_securecode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="100dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp" >
+
+        <RelativeLayout
+            android:id="@+id/v1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <EditText
+                android:id="@+id/et_code"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="1dp"
+                android:layout_marginRight="1dp"
+                android:background="@color/bg_white"
+                android:hint="@string/hint_code"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:singleLine="true" >
+
+                <requestFocus />
+            </EditText>
+
+            <ImageView
+                android:id="@+id/iv_close"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/et_code"
+                android:layout_alignRight="@id/et_code"
+                android:layout_alignTop="@id/et_code"
+                android:layout_centerVertical="true"
+                android:clickable="true"
+                android:padding="10dp"
+                android:src="@drawable/close" />
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/bt_continue"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_below="@id/v1"
+            android:background="@drawable/countinue_button"
+            android:clickable="true"
+            android:scaleType="fitXY" />
+    </RelativeLayout>
+
+</RelativeLayout>

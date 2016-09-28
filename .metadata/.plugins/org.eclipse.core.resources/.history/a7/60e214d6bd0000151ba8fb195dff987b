@@ -1,0 +1,350 @@
+package com.android.inhotel;
+
+import java.util.List;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.EditText;
+import android.widget.ImageView;
+
+import com.android.inhotel.logger.Log;
+import com.android.inhotel.quickblox.BaseActivity;
+import com.android.inhotel.quickblox.ChatService;
+import com.android.inhotel.quickblox.SystemUtils;
+import com.android.inhotel.server.ServerConnector;
+import com.android.inhotel.utils.CommonActions;
+import com.quickblox.chat.QBChatService;
+import com.quickblox.core.QBEntityCallbackImpl;
+import com.quickblox.users.model.QBUser;
+
+public class AcessCodeActivity extends BaseActivity {
+
+	
+	EditText  et_code;
+	ImageView bt_continue,iv_close;
+	int       status;
+	String    code="";
+	ProgressDialog progress_dialogue;
+	SharedPreferences prefs;
+	Editor edt;
+	//public static int chat,my_quickbloxID=0;
+	public static int my_quickbloxID=0;
+	 QBUser user;
+	
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_acess_code);
+		setAnimation(true);
+		
+		et_code	    = (EditText) findViewById(R.id.et_code);
+		iv_close    = (ImageView) findViewById(R.id.iv_close);
+		bt_continue = (ImageView) findViewById(R.id.bt_continue);
+		prefs       =  getSharedPreferences("Login Credinals", MODE_PRIVATE);		
+		edt 	    =  prefs.edit();
+		//chat        =  0;
+		
+		//LOGIN /REGISTER
+		
+		 if (new CommonActions(AcessCodeActivity.this).isNetworkConnected()) {
+
+				progress_dialogue = ProgressDialog.show(AcessCodeActivity.this, "Please wait","Loading..");
+				 doQuickBloxConnection();
+			} else {
+				new CommonActions(AcessCodeActivity.this).showToast("Please check your internet connection");
+			}
+		 
+		
+		bt_continue.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+			//et_code.setText("8063693452");//peter
+				//et_code.setText("8586199560"); //newagesme been
+			/*	et_code.setText("1233867432");*/
+			
+				//
+				//et_code.setText("1233867432");//  1380479981
+				if(!et_code.getText().toString().equalsIgnoreCase("")){
+					code=et_code.getText().toString();
+					if (new CommonActions(AcessCodeActivity.this).isNetworkConnected()) {
+
+						progress_dialogue = ProgressDialog.show(AcessCodeActivity.this, "Please wait","Loading");
+						new AcessCodeTask().execute(0);
+					} else {
+						new CommonActions(AcessCodeActivity.this).showToast("Please check your internet connection");
+					}
+				}else{
+					new AlertDialog.Builder(AcessCodeActivity.this).setTitle("Warning") 
+					.setMessage("Please enter the access code")
+					.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					})
+
+					.show();
+				}
+				
+			}
+		});
+		
+		iv_close.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {				
+				edt.putString("activation_status", "N");
+				edt.putString("activation_code", "");
+				edt.commit();
+				
+				startActivity(new Intent(
+						AcessCodeActivity.this,TabActivity.class));
+			}
+		});
+	}
+	
+	
+	//QUICKBLOX
+	public void  doQuickBloxConnection(){	
+		
+		ChatService.initIfNeed(this);
+		
+		SystemUtils.USER_LOGIN="inhotel_"+prefs.getString("user_id", "");
+		SystemUtils.USER_PASSWORD="inhotel_" + prefs.getString("user_id", "") +"123";
+		
+		
+		user = new QBUser();
+		user.setLogin(SystemUtils.USER_LOGIN);
+		user.setPassword(SystemUtils.USER_PASSWORD);        
+	      
+
+	        
+	        
+		ChatService.getInstance().login(user, new QBEntityCallbackImpl() {
+			@Override
+			public void onSuccess() {
+				// TODO Auto-generated method stub
+				super.onSuccess();				
+				progress_dialogue.cancel();
+			}
+
+			@Override
+			public void onError(List errors) {
+				// TODO Auto-generated method stub
+				super.onError(errors);
+				Log.e("login first","Suuu"+errors);
+				 final QBChatService chatService = QBChatService.getInstance();
+				 ChatService.initIfNeed(AcessCodeActivity.this);
+				boolean isLoggedIn = chatService.isLoggedIn();
+				
+				
+				Log.e("@@@@@@@@@@@isLoggedIn",isLoggedIn+"******************");
+                 if(isLoggedIn){
+                	 progress_dialogue.cancel();
+                	/* Log.e("isLoggedIn","isLoggedIn!!!!!!!!!!!!!!!!!!!");
+					chatService.logout(new QBEntityCallbackImpl() {
+						 
+					    @Override
+					    public void onSuccess() {
+					        // success
+					 
+					    	Log.e("CHAT",":********DESTROY");
+					        chatService.destroy();
+					        doQuickBloxConnection();
+
+					    	progress_dialogue.cancel();
+					    	}
+					 
+					    @Override
+					    public void onError(final List list) {
+					    	Log.e("CHAT",":********ERRRRR"+list);
+					    }
+					});*/
+				    //return;
+				}else{
+					Log.e("register first","USERS"+SystemUtils.USER_LOGIN+ "****"+SystemUtils.USER_PASSWORD);
+					
+					user = new QBUser();
+					user.setLogin(SystemUtils.USER_LOGIN);
+					user.setPassword(SystemUtils.USER_PASSWORD);
+					
+
+					ChatService.initIfNeed(AcessCodeActivity.this);
+					ChatService.getInstance().register(user,new QBEntityCallbackImpl() {
+						@Override
+						public void onSuccess() {
+							// TODO Auto-generated method stub
+							super.onSuccess();
+							
+							Log.e("register first","my_quickbloxID"+my_quickbloxID);
+							
+							CommonActions.MY_QUICKBLOX=my_quickbloxID;
+							if(my_quickbloxID!=0){
+								new AcessCodeTask().execute(1);
+							}
+							
+							
+						}
+
+						@Override
+						public void onError(List errors) {
+							// TODO Auto-generated method stub
+							super.onError(errors);
+							//progress_dialogue.cancel();
+							Log.e("register","Suuu"+errors);
+						}
+
+					});
+				}
+				
+				
+				
+			}
+
+		});
+	}
+	
+	
+	@Override
+	public void onBackPressed() {
+		// TODO Auto-generated method stub
+		super.onBackPressed();
+		setAnimation(false);
+	}
+
+	
+	
+	//Intent Transition Animation
+	public void setAnimation(boolean flg) {
+
+		if (flg) {
+			// opening transition animations
+			overridePendingTransition(R.anim.activity_open_translate,
+					R.anim.activity_close_scale);
+
+		} else {
+			// closing transition animations
+			overridePendingTransition(R.anim.activity_open_scale,
+					R.anim.activity_close_translate);
+		}
+
+	}
+	
+	 /**
+		 * Task for downloading Menu management data
+		 * 
+		 * @author joyal
+		 * 
+		 */
+		public class AcessCodeTask extends AsyncTask<Integer, Void, String> {
+
+			@Override
+			protected String doInBackground(Integer... params) {
+				// TODO Auto-generated method stub
+				status = params[0];
+				if (status == 0) {
+					return new ServerConnector(AcessCodeActivity.this)
+							.getResponseFromServer(
+									CommonActions.appURL,
+									"checkActivationCodeExpires",
+									"{\"activation_code\": \""
+											+code+ "\",\"user_id\": \""
+										+ prefs.getString("user_id", "")
+										+ "\"}", "\"\"");
+
+			}else if(status == 1){
+				return new ServerConnector(AcessCodeActivity.this)
+				.getResponseFromServer(
+						CommonActions.appURL,
+						"updateQuickBloxId",
+						"{\"quickblox_id\": \""
+								+my_quickbloxID+ "\",\"user_id\": \""
+							+ prefs.getString("user_id", "")
+							+ "\"}", "\"\"");
+
+
+
+
+				
+			} else {
+				return null;
+			}
+
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			Log.e("result", result);
+			try {
+				if (status == 0) {
+					Log.e("result", result);
+
+					JSONObject jobj = new JSONObject(result);
+					progress_dialogue.cancel();
+					
+					if(jobj.getString("activation_status").equalsIgnoreCase("Y")){						
+						edt.putString("activation_status", jobj.getString("activation_status"));
+						edt.putString("activation_code", code);						
+						edt.commit();
+						new AlertDialog.Builder(AcessCodeActivity.this).setTitle("Message")
+						.setMessage(jobj.getString("message"))
+						.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.cancel();
+								startActivity(new Intent(AcessCodeActivity.this,TabActivity.class));
+								finish();
+							}
+						})
+
+						.show();	
+						
+					}else{
+						edt.putString("activation_status", jobj.getString("activation_status"));
+						edt.putString("activation_code", "");	
+						edt.commit();
+						gotServerError(jobj.getString("message"));
+					}
+				}else if(status == 1){
+					progress_dialogue.cancel();
+				}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				gotServerError("Database error. Try again");
+			}
+			
+
+		}
+	}
+		
+		/*
+		 * Method to manage the exeption occured due to server down
+		 */
+		public void gotServerError(String msg) {
+			if(progress_dialogue.isShowing()){
+				progress_dialogue.cancel();
+			}
+			new AlertDialog.Builder(AcessCodeActivity.this).setTitle("Message")
+					.setMessage(msg)
+					.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							dialog.cancel();
+						}
+					})
+
+					.show();
+		}
+}
